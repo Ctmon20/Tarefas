@@ -38,6 +38,22 @@
         .done { text-decoration: line-through; color: #9ca3af; }
         .actions { display: flex; gap: 10px; }
         .icon-btn { cursor: pointer; border: none; background: none; font-size: 1.1rem; }
+
+        /* Notificação Personalizada */
+        #notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff4757;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            display: none;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 2000;
+        }
     </style>
 </head>
 <body>
@@ -68,13 +84,14 @@
         <ul id="taskList"></ul>
     </div>
 
+    <div id="notification">Por favor, digite uma tarefa!</div>
+
     <script>
         setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 3000);
 
         let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
         let filter = 'pending';
 
-        // Função para o App Inventor injetar dados ao iniciar
         function renderizarTarefas(dadosDoApp) {
             if (dadosDoApp && dadosDoApp !== "[]" && dadosDoApp !== "") {
                 tasks = JSON.parse(dadosDoApp);
@@ -84,7 +101,6 @@
 
         function save() { 
             localStorage.setItem('myTasks', JSON.stringify(tasks)); 
-            // Opcional: Atualizar a string para o app também se necessário
             if (window.AppInventor) window.AppInventor.setWebViewString(JSON.stringify(tasks));
             render(); 
         }
@@ -127,19 +143,25 @@
         function deleteTask(i) { tasks.splice(i, 1); save(); }
 
         document.getElementById('addBtn').addEventListener('click', () => {
-            // 1. Teste de vida (isso deve aparecer no celular)
-            alert("Botão clicado!");
-
             const input = document.getElementById('taskInput');
-            if (!input.value) return alert("Digite algo!");
-            
-            // 2. Teste de ponte
-            if (window.AppInventor) {
-                window.AppInventor.setWebViewString("teste de conexão");
-                alert("Enviado para o App Inventor!");
-            } else {
-                alert("AppInventor não encontrado!");
+            const date = document.getElementById('dateInput').value;
+            const notification = document.getElementById('notification');
+
+            if (!input.value) {
+                notification.style.display = 'block';
+                setTimeout(() => { notification.style.display = 'none'; }, 3000);
+                return;
             }
+            
+            const formattedDate = date ? date.split('-').reverse().join('/') : '';
+            tasks.push({ text: input.value, date: formattedDate, completed: false });
+            
+            if (window.AppInventor) {
+                window.AppInventor.setWebViewString(JSON.stringify(tasks));
+            }
+            
+            input.value = "";
+            save();
         });
 
         render();
