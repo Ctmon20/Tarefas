@@ -127,19 +127,19 @@
         function deleteTask(i) { tasks.splice(i, 1); save(); }
 
         document.getElementById('addBtn').addEventListener('click', () => {
+            // 1. Teste de vida (isso deve aparecer no celular)
+            alert("Botão clicado!");
+
             const input = document.getElementById('taskInput');
-            const date = document.getElementById('dateInput').value;
             if (!input.value) return alert("Digite algo!");
             
-            const formattedDate = date ? date.split('-').reverse().join('/') : '';
-            tasks.push({ text: input.value, date: formattedDate, completed: false });
-            
+            // 2. Teste de ponte
             if (window.AppInventor) {
-                window.AppInventor.setWebViewString(JSON.stringify(tasks));
+                window.AppInventor.setWebViewString("teste de conexão");
+                alert("Enviado para o App Inventor!");
+            } else {
+                alert("AppInventor não encontrado!");
             }
-            
-            input.value = "";
-            save();
         });
 
         render();
