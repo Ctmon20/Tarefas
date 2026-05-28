@@ -69,13 +69,25 @@
     </div>
 
     <script>
-        // Splash Screen Lógica
         setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 3000);
 
         let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
         let filter = 'pending';
 
-        function save() { localStorage.setItem('myTasks', JSON.stringify(tasks)); render(); }
+        // Função para o App Inventor injetar dados ao iniciar
+        function renderizarTarefas(dadosDoApp) {
+            if (dadosDoApp && dadosDoApp !== "[]" && dadosDoApp !== "") {
+                tasks = JSON.parse(dadosDoApp);
+                render();
+            }
+        }
+
+        function save() { 
+            localStorage.setItem('myTasks', JSON.stringify(tasks)); 
+            // Opcional: Atualizar a string para o app também se necessário
+            if (window.AppInventor) window.AppInventor.setWebViewString(JSON.stringify(tasks));
+            render(); 
+        }
 
         function setFilter(f) {
             filter = f;
@@ -118,8 +130,14 @@
             const input = document.getElementById('taskInput');
             const date = document.getElementById('dateInput').value;
             if (!input.value) return alert("Digite algo!");
+            
             const formattedDate = date ? date.split('-').reverse().join('/') : '';
             tasks.push({ text: input.value, date: formattedDate, completed: false });
+            
+            if (window.AppInventor) {
+                window.AppInventor.setWebViewString(JSON.stringify(tasks));
+            }
+            
             input.value = "";
             save();
         });
