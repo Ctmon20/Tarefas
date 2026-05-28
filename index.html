@@ -3,9 +3,8 @@
 <head>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="application-name" content="SEAD">
-    <meta name="apple-mobile-web-app-title" content="SEAD">
+    <meta name="apple-mobile-web-app-title" content="tarefa">
 
     <link rel="icon" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
@@ -80,8 +79,12 @@
         </div>
         
         <div class="input-group">
-            <input type="text" id="taskInput" placeholder="Nova tarefa...">
+            <label>Tarefa</label>
+            <input type="text" id="taskInput" placeholder="O que fazer?">
+            <label>Data</label>
             <input type="date" id="dateInput">
+            <label>Hora</label>
+            <input type="time" id="timeInput">
             <button id="addBtn">Adicionar</button>
         </div>
 
@@ -136,7 +139,7 @@
                     li.innerHTML = `
                         <div class="task-info">
                             <span class="${task.completed ? 'done' : ''}">${task.text}</span>
-                            <small class="date-label">${task.date ? 'Data agendada: ' + task.date : 'Sem data'}</small>
+                            <small class="date-label">${task.date ? 'Data: ' + task.date : ''} ${task.time ? 'às ' + task.time : ''}</small>
                             ${task.completed ? `<small class="done-date">Concluído em: ${task.finishedAt}</small>` : ''}
                         </div>
                         <div class="actions">
@@ -154,6 +157,7 @@
         document.getElementById('addBtn').addEventListener('click', () => {
             const input = document.getElementById('taskInput');
             const date = document.getElementById('dateInput').value;
+            const time = document.getElementById('timeInput').value;
             const notification = document.getElementById('notification');
 
             if (!input.value) {
@@ -163,13 +167,15 @@
             }
             
             const formattedDate = date ? date.split('-').reverse().join('/') : '';
-            tasks.push({ text: input.value, date: formattedDate, completed: false });
+            tasks.push({ text: input.value, date: formattedDate, time: time, completed: false });
             
             if (window.AppInventor) {
                 window.AppInventor.setWebViewString(JSON.stringify(tasks));
             }
             
             input.value = "";
+            document.getElementById('dateInput').value = "";
+            document.getElementById('timeInput').value = "";
             save();
         });
 
