@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Tarefas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Tela Inicial com Logo e Spinner */
+        #splash { position: fixed; top:0; left:0; width:100%; height:100%; background:#6366f1; color:white; display:flex; flex-direction: column; justify-content:center; align-items:center; z-index:1000; gap: 20px; }
+        .splash-logo { width: 100px; height: auto; margin-bottom: 10px; }
+        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-top: 5px solid white; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Layout Geral */
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f9; display: flex; justify-content: center; padding: 20px; margin: 0; }
+        .container { background: white; padding: 2rem; border-radius: 15px; width: 100%; max-width: 400px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+        
+        /* Cabeçalho Alinhado à Esquerda */
+        .header-container { display: flex; align-items: center; justify-content: flex-start; gap: 15px; margin-bottom: 20px; }
+        .logo { width: 50px; height: auto; }
+        h1 { margin: 0; font-size: 1.5rem; }
+
+        @media (max-width: 480px) { .container { padding: 1rem; width: 90%; } }
+        
+        .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        #addBtn { padding: 12px; border: none; border-radius: 8px; background: #6366f1; color: white; cursor: pointer; }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; background: #e5e7eb; color: #666; }
+        .tab-btn.active { background: #6366f1; color: white; }
+        
+        li { padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .task-info { display: flex; flex-direction: column; }
+        .date-label { font-size: 0.75rem; color: #888; }
+        .done-date { font-size: 0.75rem; color: #22c55e; font-weight: bold; }
+        .done { text-decoration: line-through; color: #9ca3af; }
+        .actions { display: flex; gap: 10px; }
+        .icon-btn { cursor: pointer; border: none; background: none; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+    <div id="splash">
+        <img src="logo.png" alt="Logo" class="splash-logo">
+        <div class="spinner"></div>
+        <div>Atualizando suas tarefas...</div>
+    </div>
+
+    <div class="container">
+        <div class="header-container">
+            <img src="logo.png" alt="Logo" class="logo">
+            <h1>Tarefas</h1>
+        </div>
+        
+        <div class="input-group">
+            <input type="text" id="taskInput" placeholder="Nova tarefa...">
+            <input type="date" id="dateInput">
+            <button id="addBtn">Adicionar</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" id="btnPending" onclick="setFilter('pending')">Pendentes</button>
+            <button class="tab-btn" id="btnCompleted" onclick="setFilter('completed')">Concluídas</button>
+        </div>
+
+        <ul id="taskList"></ul>
+    </div>
+
+    <script>
+        // Splash Screen Lógica
+        setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 3000);
+
+        let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
+        let filter = 'pending';
+
+        function save() { localStorage.setItem('myTasks', JSON.stringify(tasks)); render(); }
+
+        function setFilter(f) {
+            filter = f;
+            document.getElementById('btnPending').classList.toggle('active', f === 'pending');
+            document.getElementById('btnCompleted').classList.toggle('active', f === 'completed');
+            render();
+        }
+
+        function toggleTask(i) {
+            tasks[i].completed = !tasks[i].completed;
+            tasks[i].finishedAt = tasks[i].completed ? new Date().toLocaleDateString('pt-BR') : null;
+            save();
+        }
+
+        function render() {
+            const list = document.getElementById('taskList');
+            list.innerHTML = "";
+            tasks.forEach((task, index) => {
+                if ((filter === 'completed' && task.completed) || (filter === 'pending' && !task.completed)) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div class="task-info">
+                            <span class="${task.completed ? 'done' : ''}">${task.text}</span>
+                            <small class="date-label">${task.date ? 'Data agendada: ' + task.date : 'Sem data'}</small>
+                            ${task.completed ? `<small class="done-date">Concluído em: ${task.finishedAt}</small>` : ''}
+                        </div>
+                        <div class="actions">
+                            <button class="icon-btn" onclick="toggleTask(${index})"><i class="fas ${task.completed ? 'fa-undo' : 'fa-check-circle'}"></i></button>
+                            <button class="icon-btn" onclick="deleteTask(${index})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                }
+            });
+        }
+
+        function deleteTask(i) { tasks.splice(i, 1); save(); }
+
+        document.getElementById('addBtn').addEventListener('click', () => {
+            const input = document.getElementById('taskInput');
+            const date = document.getElementById('dateInput').value;
+            if (!input.value) return alert("Digite algo!");
+            const formattedDate = date ? date.split('-').reverse().join('/') : '';
+            tasks.push({ text: input.value, date: formattedDate, completed: false });
+            input.value = "";
+            save();
+        });
+
+        render();
+    </script>
+</body>
+</html>
