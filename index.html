@@ -36,12 +36,11 @@
         .actions { display: flex; gap: 10px; }
         .icon-btn { cursor: pointer; border: none; background: none; font-size: 1.1rem; }
         #notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #ff4757; color: white; padding: 12px 25px; border-radius: 50px; display: none; font-weight: bold; z-index: 2000; }
-        #paywallModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 15px; text-align: center; width: 90%; max-width: 300px; }
-        .btn-upgrade { background: #22c55e; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 15px; font-weight: bold; width: 100%; }
-        .val-input { width: 100%; box-sizing: border-box; margin-top: 10px; padding: 10px; }
-        /* Janela de Status Customizada */
         #statusNotification { display:none; position:fixed; top:20px; right:20px; background:#22c55e; color:white; padding:15px 25px; border-radius:8px; z-index:9999; box-shadow: 0 4px 6px rgba(0,0,0,0.2); font-weight:bold; }
+        /* Modal de confirmação */
+        #resultModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 15px; text-align: center; width: 90%; max-width: 300px; }
+        .btn-close { background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 15px; width: 100%; }
     </style>
 </head>
 <body>
@@ -49,10 +48,10 @@
     <div id="splash">
         <img src="logo.png" alt="Logo" class="splash-logo">
         <div class="spinner"></div>
-        <div>Atualizando...</div>
+        <div>Carregando...</div>
     </div>
 
-    <div id="statusNotification">Acesso liberado!</div>
+    <div id="statusNotification">Tarefa salva!</div>
 
     <div class="container">
         <div class="header-container">
@@ -82,22 +81,25 @@
         <ul id="taskList"></ul>
     </div>
 
-    <div id="paywallModal">
+    <div id="resultModal">
         <div class="modal-content">
-            <h3>Acesso Restrito</h3>
-            <p>Informe este ID ao realizar o pagamento: <br><strong id="modalIdDisplay"></strong></p>
-            <a href="https://mpago.la/2Z15U7r" target="_blank" style="text-decoration:none;">
-                <button class="btn-upgrade">Renovar Assinatura</button>
-            </a>
-            <input type="text" id="userCode" class="val-input" placeholder="Cole seu ID aqui">
-            <button onclick="validarCodigo()" class="btn-upgrade" style="background:#6366f1;">Validar Código</button>
-            <button onclick="continuarGratuito()" style="margin-top:10px; border:none; background:none; cursor:pointer; color:gray;">Continuar como Gratuito</button>
+            <h3>Tarefa Cadastrada!</h3>
+            <p id="modalTaskText" style="margin: 15px 0; font-weight: bold;"></p>
+            <button class="btn-close" onclick="document.getElementById('resultModal').style.display = 'none'">Fechar</button>
         </div>
     </div>
 
     <div id="notification">Por favor, digite uma tarefa!</div>
 
     <script>
+        // Lógica de ID único
+        let deviceId = localStorage.getItem('userDeviceId');
+        if (!deviceId) {
+            deviceId = "CLI-" + Math.floor(10000 + Math.random() * 90000);
+            localStorage.setItem('userDeviceId', deviceId);
+        }
+        document.getElementById('userDeviceId').innerText = deviceId;
+
         function mostrarStatus(mensagem) {
             const el = document.getElementById('statusNotification');
             el.innerText = mensagem;
@@ -105,66 +107,10 @@
             setTimeout(() => { el.style.display = 'none'; }, 3000);
         }
 
-        let deviceId = localStorage.getItem('userDeviceId');
-        if (!deviceId) {
-            deviceId = "CLI-" + Math.floor(10000 + Math.random() * 90000);
-            localStorage.setItem('userDeviceId', deviceId);
-        }
-        document.getElementById('userDeviceId').innerText = deviceId;
-        document.getElementById('modalIdDisplay').innerText = deviceId;
-
-        setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 3000);
+        setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 1500);
+        
         let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
         let filter = 'pending';
-        let isPremium = localStorage.getItem('isPremium') === 'true';
-
-        async function init() {
-            const codigoSalvo = localStorage.getItem('userCode');
-            if (!codigoSalvo) {
-                document.getElementById('paywallModal').style.display = 'flex';
-            } else {
-                await verificarPagamento(codigoSalvo, true);
-            }
-        }
-
-        async function validarCodigo() {
-            const codigo = document.getElementById('userCode').value;
-            if(!codigo) { mostrarStatus("Digite o código"); return; }
-            localStorage.setItem('userCode', codigo);
-            await verificarPagamento(codigo, false);
-        }
-
-        async function verificarPagamento(codigo, isAuto = false) {
-            const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTkuZzRjNJSWlWltzXJgXot4Ryc9WtkKlsEy2eMsLQImd2-wR71Ja-FdCFtZMHMWVAoO7JiHOWSFESa/pub?gid=0&single=true&output=csv&t=" + new Date().getTime();
-            try {
-                const response = await fetch(url);
-                const csvText = await response.text();
-                const rows = csvText.split('\n').slice(1);
-                
-                const liberado = rows.some(row => {
-                    const [id, status] = row.split(',');
-                    return id?.trim() === codigo.trim() && status?.trim().toLowerCase() === 'pago';
-                });
-
-                if (liberado) {
-                    isPremium = true;
-                    localStorage.setItem('isPremium', 'true');
-                    document.getElementById('paywallModal').style.display = 'none';
-                    if (!isAuto) mostrarStatus("Acesso liberado!");
-                } else {
-                    isPremium = false;
-                    localStorage.setItem('isPremium', 'false');
-                    document.getElementById('paywallModal').style.display = 'flex';
-                    if (!isAuto) mostrarStatus("Código inválido ou pendente.");
-                }
-            } catch (e) { if (!isAuto) mostrarStatus("Erro ao conectar."); }
-        }
-
-        function continuarGratuito() {
-            isPremium = false;
-            localStorage.setItem('isPremium', 'false');
-            document.getElementById('paywallModal').style.display = 'none';
-        }
 
         function save() { 
             localStorage.setItem('myTasks', JSON.stringify(tasks)); 
@@ -210,40 +156,33 @@
         }
 
         document.getElementById('addBtn').addEventListener('click', () => {
-            if (!isPremium) {
-                const hoje = new Date().toLocaleDateString('pt-BR');
-                const tarefasDeHoje = tasks.filter(t => t.createdAt === hoje);
-                if (tarefasDeHoje.length >= 5) {
-                    document.getElementById('paywallModal').style.display = 'flex';
-                    return;
-                }
-            }
             const input = document.getElementById('taskInput');
             if (!input.value) {
                 document.getElementById('notification').style.display = 'block';
                 setTimeout(() => { document.getElementById('notification').style.display = 'none'; }, 3000);
                 return;
             }
-            tasks.push({ 
+            
+            const novaTarefa = { 
                 text: input.value, 
                 date: document.getElementById('dateInput').value.split('-').reverse().join('/'), 
                 time: document.getElementById('timeInput').value, 
                 completed: false,
                 createdAt: new Date().toLocaleDateString('pt-BR')
-            });
-            input.value = "";
+            };
+            
+            tasks.push(novaTarefa);
             save();
+            
+            // Exibe modal com a tarefa
+            document.getElementById('modalTaskText').innerText = novaTarefa.text;
+            document.getElementById('resultModal').style.display = 'flex';
+            
+            input.value = "";
+            mostrarStatus("Tarefa adicionada!");
         });
 
-        init();
         render();
-
-        setInterval(async () => {
-            const codigoSalvo = localStorage.getItem('userCode');
-            if (codigoSalvo) {
-                await verificarPagamento(codigoSalvo, true);
-            }
-        }, 60000);
     </script>
 </body>
 </html>
