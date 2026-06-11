@@ -5,7 +5,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="application-name" content="SEAD">
     <meta name="apple-mobile-web-app-title" content="tarefa">
-
     <link rel="icon" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="manifest" href="manifest.json">
@@ -14,31 +13,21 @@
     <title>Minhas Tarefas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Tela Inicial com Logo e Spinner */
         #splash { position: fixed; top:0; left:0; width:100%; height:100%; background:#6366f1; color:white; display:flex; flex-direction: column; justify-content:center; align-items:center; z-index:1000; gap: 20px; }
         .splash-logo { width: 100px; height: auto; margin-bottom: 10px; }
         .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-top: 5px solid white; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        /* Layout Geral */
         body { font-family: 'Segoe UI', sans-serif; background: #f4f4f9; display: flex; justify-content: center; padding: 20px; margin: 0; }
-        .container { background: white; padding: 2rem; border-radius: 15px; width: 100%; max-width: 400px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
-        
-        /* Cabeçalho Alinhado à Esquerda */
+        .container { background: rgb(169, 231, 226); padding: 2rem; border-radius: 15px; width: 100%; max-width: 400px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
         .header-container { display: flex; align-items: center; justify-content: flex-start; gap: 15px; margin-bottom: 20px; }
         .logo { width: 50px; height: auto; }
         h1 { margin: 0; font-size: 1.5rem; }
-
-        @media (max-width: 480px) { .container { padding: 1rem; width: 90%; } }
-        
         .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
         input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
         #addBtn { padding: 12px; border: none; border-radius: 8px; background: #6366f1; color: white; cursor: pointer; }
-        
         .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
         .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; background: #e5e7eb; color: #666; }
         .tab-btn.active { background: #6366f1; color: white; }
-        
         li { padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
         .task-info { display: flex; flex-direction: column; }
         .date-label { font-size: 0.75rem; color: #888; }
@@ -46,22 +35,13 @@
         .done { text-decoration: line-through; color: #9ca3af; }
         .actions { display: flex; gap: 10px; }
         .icon-btn { cursor: pointer; border: none; background: none; font-size: 1.1rem; }
-
-        /* Notificação Personalizada */
-        #notification {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ff4757;
-            color: white;
-            padding: 12px 25px;
-            border-radius: 50px;
-            display: none;
-            font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            z-index: 2000;
-        }
+        #notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #ff4757; color: white; padding: 12px 25px; border-radius: 50px; display: none; font-weight: bold; z-index: 2000; }
+        #paywallModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 15px; text-align: center; width: 90%; max-width: 300px; }
+        .btn-upgrade { background: #22c55e; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 15px; font-weight: bold; width: 100%; }
+        .val-input { width: 100%; box-sizing: border-box; margin-top: 10px; padding: 10px; }
+        /* Janela de Status Customizada */
+        #statusNotification { display:none; position:fixed; top:20px; right:20px; background:#22c55e; color:white; padding:15px 25px; border-radius:8px; z-index:9999; box-shadow: 0 4px 6px rgba(0,0,0,0.2); font-weight:bold; }
     </style>
 </head>
 <body>
@@ -69,13 +49,19 @@
     <div id="splash">
         <img src="logo.png" alt="Logo" class="splash-logo">
         <div class="spinner"></div>
-        <div>Atualizando suas tarefas...</div>
+        <div>Atualizando...</div>
     </div>
+
+    <div id="statusNotification">Acesso liberado!</div>
 
     <div class="container">
         <div class="header-container">
             <img src="logo.png" alt="Logo" class="logo">
             <h1>Tarefas</h1>
+        </div>
+        
+        <div id="idContainer" style="font-size: 0.85rem; color: #444; margin-bottom: 15px; background: rgba(255,255,255,0.5); padding: 8px; border-radius: 8px;">
+            Seu ID de Acesso: <span id="userDeviceId" style="font-weight:bold;"></span>
         </div>
         
         <div class="input-group">
@@ -96,19 +82,88 @@
         <ul id="taskList"></ul>
     </div>
 
+    <div id="paywallModal">
+        <div class="modal-content">
+            <h3>Acesso Restrito</h3>
+            <p>Informe este ID ao realizar o pagamento: <br><strong id="modalIdDisplay"></strong></p>
+            <a href="https://mpago.la/2Z15U7r" target="_blank" style="text-decoration:none;">
+                <button class="btn-upgrade">Renovar Assinatura</button>
+            </a>
+            <input type="text" id="userCode" class="val-input" placeholder="Cole seu ID aqui">
+            <button onclick="validarCodigo()" class="btn-upgrade" style="background:#6366f1;">Validar Código</button>
+            <button onclick="continuarGratuito()" style="margin-top:10px; border:none; background:none; cursor:pointer; color:gray;">Continuar como Gratuito</button>
+        </div>
+    </div>
+
     <div id="notification">Por favor, digite uma tarefa!</div>
 
     <script>
-        setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 3000);
+        function mostrarStatus(mensagem) {
+            const el = document.getElementById('statusNotification');
+            el.innerText = mensagem;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 3000);
+        }
 
+        let deviceId = localStorage.getItem('userDeviceId');
+        if (!deviceId) {
+            deviceId = "CLI-" + Math.floor(10000 + Math.random() * 90000);
+            localStorage.setItem('userDeviceId', deviceId);
+        }
+        document.getElementById('userDeviceId').innerText = deviceId;
+        document.getElementById('modalIdDisplay').innerText = deviceId;
+
+        setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 3000);
         let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
         let filter = 'pending';
+        let isPremium = localStorage.getItem('isPremium') === 'true';
 
-        function renderizarTarefas(dadosDoApp) {
-            if (dadosDoApp && dadosDoApp !== "[]" && dadosDoApp !== "") {
-                tasks = JSON.parse(dadosDoApp);
-                render();
+        async function init() {
+            const codigoSalvo = localStorage.getItem('userCode');
+            if (!codigoSalvo) {
+                document.getElementById('paywallModal').style.display = 'flex';
+            } else {
+                await verificarPagamento(codigoSalvo, true);
             }
+        }
+
+        async function validarCodigo() {
+            const codigo = document.getElementById('userCode').value;
+            if(!codigo) { mostrarStatus("Digite o código"); return; }
+            localStorage.setItem('userCode', codigo);
+            await verificarPagamento(codigo, false);
+        }
+
+        async function verificarPagamento(codigo, isAuto = false) {
+            const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTkuZzRjNJSWlWltzXJgXot4Ryc9WtkKlsEy2eMsLQImd2-wR71Ja-FdCFtZMHMWVAoO7JiHOWSFESa/pub?gid=0&single=true&output=csv&t=" + new Date().getTime();
+            try {
+                const response = await fetch(url);
+                const csvText = await response.text();
+                const rows = csvText.split('\n').slice(1);
+                
+                const liberado = rows.some(row => {
+                    const [id, status] = row.split(',');
+                    return id?.trim() === codigo.trim() && status?.trim().toLowerCase() === 'pago';
+                });
+
+                if (liberado) {
+                    isPremium = true;
+                    localStorage.setItem('isPremium', 'true');
+                    document.getElementById('paywallModal').style.display = 'none';
+                    if (!isAuto) mostrarStatus("Acesso liberado!");
+                } else {
+                    isPremium = false;
+                    localStorage.setItem('isPremium', 'false');
+                    document.getElementById('paywallModal').style.display = 'flex';
+                    if (!isAuto) mostrarStatus("Código inválido ou pendente.");
+                }
+            } catch (e) { if (!isAuto) mostrarStatus("Erro ao conectar."); }
+        }
+
+        function continuarGratuito() {
+            isPremium = false;
+            localStorage.setItem('isPremium', 'false');
+            document.getElementById('paywallModal').style.display = 'none';
         }
 
         function save() { 
@@ -129,6 +184,8 @@
             tasks[i].finishedAt = tasks[i].completed ? new Date().toLocaleDateString('pt-BR') : null;
             save();
         }
+
+        function deleteTask(i) { tasks.splice(i, 1); save(); }
 
         function render() {
             const list = document.getElementById('taskList');
@@ -152,34 +209,41 @@
             });
         }
 
-        function deleteTask(i) { tasks.splice(i, 1); save(); }
-
         document.getElementById('addBtn').addEventListener('click', () => {
+            if (!isPremium) {
+                const hoje = new Date().toLocaleDateString('pt-BR');
+                const tarefasDeHoje = tasks.filter(t => t.createdAt === hoje);
+                if (tarefasDeHoje.length >= 5) {
+                    document.getElementById('paywallModal').style.display = 'flex';
+                    return;
+                }
+            }
             const input = document.getElementById('taskInput');
-            const date = document.getElementById('dateInput').value;
-            const time = document.getElementById('timeInput').value;
-            const notification = document.getElementById('notification');
-
             if (!input.value) {
-                notification.style.display = 'block';
-                setTimeout(() => { notification.style.display = 'none'; }, 3000);
+                document.getElementById('notification').style.display = 'block';
+                setTimeout(() => { document.getElementById('notification').style.display = 'none'; }, 3000);
                 return;
             }
-            
-            const formattedDate = date ? date.split('-').reverse().join('/') : '';
-            tasks.push({ text: input.value, date: formattedDate, time: time, completed: false });
-            
-            if (window.AppInventor) {
-                window.AppInventor.setWebViewString(JSON.stringify(tasks));
-            }
-            
+            tasks.push({ 
+                text: input.value, 
+                date: document.getElementById('dateInput').value.split('-').reverse().join('/'), 
+                time: document.getElementById('timeInput').value, 
+                completed: false,
+                createdAt: new Date().toLocaleDateString('pt-BR')
+            });
             input.value = "";
-            document.getElementById('dateInput').value = "";
-            document.getElementById('timeInput').value = "";
             save();
         });
 
+        init();
         render();
+
+        setInterval(async () => {
+            const codigoSalvo = localStorage.getItem('userCode');
+            if (codigoSalvo) {
+                await verificarPagamento(codigoSalvo, true);
+            }
+        }, 60000);
     </script>
 </body>
 </html>
