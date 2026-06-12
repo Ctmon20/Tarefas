@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Tarefas</title>
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="application-name" content="SEAD">
@@ -8,15 +12,15 @@
     <link rel="icon" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="manifest" href="manifest.json">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minhas Tarefas</title>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Estilos mantidos 100% conforme o original */
         #splash { position: fixed; top:0; left:0; width:100%; height:100%; background:#6366f1; color:white; display:flex; flex-direction: column; justify-content:center; align-items:center; z-index:1000; gap: 20px; }
         .splash-logo { width: 100px; height: auto; margin-bottom: 10px; }
         .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-top: 5px solid white; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
         body { font-family: 'Segoe UI', sans-serif; background: #f4f4f9; display: flex; justify-content: center; padding: 20px; margin: 0; }
         .container { background: rgb(169, 231, 226); padding: 2rem; border-radius: 15px; width: 100%; max-width: 400px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
         .header-container { display: flex; align-items: center; justify-content: flex-start; gap: 15px; margin-bottom: 20px; }
@@ -28,15 +32,19 @@
         .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
         .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; background: #e5e7eb; color: #666; }
         .tab-btn.active { background: #6366f1; color: white; }
-        li { padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        
+        ul { list-style: none; padding: 0; margin: 0; }
+        li { padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: white; margin-bottom: 5px; border-radius: 8px;}
         .task-info { display: flex; flex-direction: column; }
         .date-label { font-size: 0.75rem; color: #888; }
         .done-date { font-size: 0.75rem; color: #22c55e; font-weight: bold; }
         .done { text-decoration: line-through; color: #9ca3af; }
         .actions { display: flex; gap: 10px; }
-        .icon-btn { cursor: pointer; border: none; background: none; font-size: 1.1rem; }
+        .icon-btn { cursor: pointer; border: none; background: none; font-size: 1.1rem; color: #6366f1; }
+        
         #notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #ff4757; color: white; padding: 12px 25px; border-radius: 50px; display: none; font-weight: bold; z-index: 2000; }
         #statusNotification { display:none; position:fixed; top:20px; right:20px; background:#22c55e; color:white; padding:15px 25px; border-radius:8px; z-index:9999; box-shadow: 0 4px 6px rgba(0,0,0,0.2); font-weight:bold; }
+        
         /* Modal de confirmação */
         #resultModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 25px; border-radius: 15px; text-align: center; width: 90%; max-width: 300px; }
@@ -58,6 +66,10 @@
             <img src="logo.png" alt="Logo" class="logo">
             <h1>Tarefas</h1>
         </div>
+        
+        <button onclick="window.location.href='pagamento.html'" style="background: #f59e0b; color: white; border: none; padding: 10px; width: 100%; border-radius: 8px; margin-bottom: 15px; cursor: pointer; font-weight: bold;">
+            <i class="fas fa-crown"></i> Ativar Acesso Premium
+        </button>
         
         <div id="idContainer" style="font-size: 0.85rem; color: #444; margin-bottom: 15px; background: rgba(255,255,255,0.5); padding: 8px; border-radius: 8px;">
             Seu ID de Acesso: <span id="userDeviceId" style="font-weight:bold;"></span>
@@ -100,6 +112,42 @@
         }
         document.getElementById('userDeviceId').innerText = deviceId;
 
+                // Verificação Premium com AJUSTE para limpar espaços em branco
+                // Substitua a função atual por esta versão melhorada
+        // --- ADICIONE ESTA VARIÁVEL GLOBAL LOGO APÓS A DEFINIÇÃO DO deviceId ---
+        let isPremium = false; 
+
+        // --- ATUALIZE A FUNÇÃO verificarAcesso PARA ATUALIZAR A VARIÁVEL ---
+        async function verificarAcesso() {
+            const deviceId = localStorage.getItem('userDeviceId');
+            const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTkuZzRjNJSWlWltzXJgXot4Ryc9WtkKlsEy2eMsLQImd2-wR71Ja-FdCFtZMHMWVAoO7JiHOWSFESa/pub?gid=0&single=true&output=csv&t=" + new Date().getTime();
+            
+            try {
+                const resposta = await fetch(urlCSV);
+                const texto = await resposta.text();
+                const linhas = texto.split('\n');
+                const ehPremium = linhas.some(linha => {
+                    const linhaLimpa = linha.replace(/\s+/g, '').toUpperCase();
+                    const idLimpo = deviceId.replace(/\s+/g, '').toUpperCase();
+                    return linhaLimpa.includes(idLimpo) && linhaLimpa.includes("PAGO");
+                });
+
+                if (ehPremium) {
+                    isPremium = true; // Define como true se for premium
+                    const container = document.querySelector('.container');
+                    container.style.border = "4px solid #22c55e";
+                    const btnPremium = document.querySelector('button[onclick*="pagamento.html"]');
+                    btnPremium.innerHTML = '<i class="fas fa-check-circle"></i> Premium Ativado';
+                    btnPremium.style.backgroundColor = "#22c55e";
+                    btnPremium.onclick = null;
+                }
+            } catch (e) { console.error("Erro na verificação:", e); }
+        }
+        verificarAcesso();
+
+        // Garanta que a função seja chamada logo após o carregamento (pode colocar logo abaixo da definição do deviceId)
+        verificarAcesso();
+
         function mostrarStatus(mensagem) {
             const el = document.getElementById('statusNotification');
             el.innerText = mensagem;
@@ -107,6 +155,7 @@
             setTimeout(() => { el.style.display = 'none'; }, 3000);
         }
 
+        // Esconde splash original
         setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 1500);
         
         let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
@@ -125,6 +174,7 @@
             render();
         }
 
+        // Função ORIGINAL de alternar mantida (com data de conclusão)
         function toggleTask(i) {
             tasks[i].completed = !tasks[i].completed;
             tasks[i].finishedAt = tasks[i].completed ? new Date().toLocaleDateString('pt-BR') : null;
@@ -133,6 +183,7 @@
 
         function deleteTask(i) { tasks.splice(i, 1); save(); }
 
+        // Renderização ORIGINAL mantida (com botões e datas)
         function render() {
             const list = document.getElementById('taskList');
             list.innerHTML = "";
@@ -157,6 +208,18 @@
 
         document.getElementById('addBtn').addEventListener('click', () => {
             const input = document.getElementById('taskInput');
+            const modal = document.getElementById('resultModal');
+            const modalTitle = modal.querySelector('h3');
+            const modalText = document.getElementById('modalTaskText');
+
+            // Lógica de Limite de 5 cadastros para não-premium usando MODAL
+            if (!isPremium && tasks.length >= 5) {
+                modalTitle.innerText = "Limite Atingido! 🚀";
+                modalText.innerText = "Limite de 5 tarefas atingido! Assine o plano Premium Mensal para liberar tarefas ilimitadas e ter acesso a todas as funcionalidades.";
+                modal.style.display = 'flex';
+                return;
+            }
+
             if (!input.value) {
                 document.getElementById('notification').style.display = 'block';
                 setTimeout(() => { document.getElementById('notification').style.display = 'none'; }, 3000);
@@ -174,11 +237,12 @@
             tasks.push(novaTarefa);
             save();
             
-            // Exibe modal com a tarefa
             document.getElementById('modalTaskText').innerText = novaTarefa.text;
             document.getElementById('resultModal').style.display = 'flex';
             
             input.value = "";
+            document.getElementById('dateInput').value = "";
+            document.getElementById('timeInput').value = "";
             mostrarStatus("Tarefa adicionada!");
         });
 
