@@ -30,8 +30,9 @@
         input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
         #addBtn { padding: 12px; border: none; border-radius: 8px; background: #6366f1; color: white; cursor: pointer; }
         .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
-        .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; background: #e5e7eb; color: #666; }
+        .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; background: #e5e7eb; color: #666; display: flex; flex-direction: column; align-items: center; }
         .tab-btn.active { background: #6366f1; color: white; }
+        .count-badge { font-size: 0.7rem; font-weight: bold; margin-top: 2px; }
         
         /* Estilos da Lista e Botões */
         ul { list-style: none; padding: 0; margin: 0; }
@@ -106,8 +107,17 @@
         </div>
 
         <div class="tabs">
-            <button class="tab-btn active" id="btnPending" onclick="setFilter('pending')">Pendentes</button>
-            <button class="tab-btn" id="btnCompleted" onclick="setFilter('completed')">Concluídas</button>
+            <button class="tab-btn active" id="btnPending" onclick="setFilter('pending')">
+                Pendentes <span id="countPending" class="count-badge">0</span>
+            </button>
+            <button class="tab-btn" id="btnCompleted" onclick="setFilter('completed')">
+                Concluídas <span id="countCompleted" class="count-badge">0</span>
+            </button>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="font-size: 0.8rem; color: #50C878;">Pesquisar por Data (vazio = todos):</label>
+            <input type="date" id="searchDate" onchange="render()" style="width: 100%; box-sizing: border-box;">
         </div>
 
         <ul id="taskList"></ul>
@@ -230,8 +240,20 @@
         function render() {
             const list = document.getElementById('taskList');
             list.innerHTML = "";
+            const searchDate = document.getElementById('searchDate').value;
+            const formattedSearchDate = searchDate ? searchDate.split('-').reverse().join('/') : null;
+            
+            const pendingTasks = tasks.filter(t => !t.completed);
+            const completedTasks = tasks.filter(t => t.completed);
+            
+            document.getElementById('countPending').innerText = pendingTasks.length;
+            document.getElementById('countCompleted').innerText = completedTasks.length;
+
             tasks.forEach((task, index) => {
-                if ((filter === 'completed' && task.completed) || (filter === 'pending' && !task.completed)) {
+                const matchesFilter = (filter === 'completed' && task.completed) || (filter === 'pending' && !task.completed);
+                const matchesDate = !formattedSearchDate || task.date === formattedSearchDate;
+                
+                if (matchesFilter && matchesDate) {
                     const li = document.createElement('li');
                     li.innerHTML = `
                         <div class="task-info">
@@ -279,8 +301,8 @@
             }[document.getElementById('langSelect').value];
             document.querySelector('h1').innerText = t.title;
             document.getElementById('addBtn').innerText = t.add;
-            document.getElementById('btnPending').innerText = t.pending;
-            document.getElementById('btnCompleted').innerText = t.completed;
+            document.getElementById('btnPending').childNodes[0].textContent = t.pending + ' ';
+            document.getElementById('btnCompleted').childNodes[0].textContent = t.completed + ' ';
         }
 
         let currentTaskId = null, currentAction = null;
@@ -296,7 +318,6 @@
                 msg.innerText = "Tem certeza que deseja excluir esta tarefa?";
                 btn.style.background = "#ef4444";
             } else {
-                // Se estiver concluída, pergunta para desfazer
                 title.innerText = isCompleted ? "Desfazer Conclusão" : "Concluir Tarefa";
                 msg.innerText = isCompleted ? "Deseja tornar esta tarefa pendente novamente?" : "Deseja marcar esta tarefa como concluída?";
                 btn.style.background = "#22c55e";
