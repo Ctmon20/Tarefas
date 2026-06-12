@@ -33,6 +33,7 @@
         .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; background: #e5e7eb; color: #666; }
         .tab-btn.active { background: #6366f1; color: white; }
         
+        /* Estilos da Lista e Botões */
         ul { list-style: none; padding: 0; margin: 0; }
         li { padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: white; margin-bottom: 5px; border-radius: 8px;}
         .task-info { display: flex; flex-direction: column; }
@@ -45,10 +46,85 @@
         #notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #ff4757; color: white; padding: 12px 25px; border-radius: 50px; display: none; font-weight: bold; z-index: 2000; }
         #statusNotification { display:none; position:fixed; top:20px; right:20px; background:#22c55e; color:white; padding:15px 25px; border-radius:8px; z-index:9999; box-shadow: 0 4px 6px rgba(0,0,0,0.2); font-weight:bold; }
         
-        /* Modal de confirmação */
         #resultModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 25px; border-radius: 15px; text-align: center; width: 90%; max-width: 300px; }
+        
+        /* Ajuste do Título com engrenagem */
+        .title-wrapper { display: flex; align-items: center; gap: 15px; }
+        .settings-btn { background: none; border: none; cursor: pointer; font-size: 24px; padding: 0; }
         .btn-close { background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 15px; width: 100%; }
+    
+                /* Estilo moderno para o Modal */
+        #settingsModal {
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.4); 
+            backdrop-filter: blur(5px); /* Efeito vidro fosco */
+            z-index: 5000; 
+            justify-content: center; 
+            align-items: center;
+        }
+
+        .settings-card {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        .setting-option {
+            margin-bottom: 20px;
+        }
+
+        .setting-option label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .modern-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            background-color: #f9fafb;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .modern-select:focus {
+            border-color: #6366f1;
+            outline: none;
+        }
+
+                /* Estilos para o Modo Escuro */
+        body.dark-mode {
+            background: #1f2937;
+            color: white;
+        }
+
+        body.dark-mode .container {
+            background: #374151;
+            color: white;
+        }
+
+        body.dark-mode li {
+            background: #4b5563;
+            border-color: #6b7280;
+        }
+
+        body.dark-mode input, body.dark-mode select {
+            background: #1f2937;
+            color: white;
+            border-color: #6b7280;
+        }
+
     </style>
 </head>
 <body>
@@ -64,7 +140,10 @@
     <div class="container">
         <div class="header-container">
             <img src="logo.png" alt="Logo" class="logo">
-            <h1>Tarefas</h1>
+            <div class="title-wrapper">
+                <h1>Tarefas</h1>
+                <button class="settings-btn" onclick="document.getElementById('settingsModal').style.display = 'flex'">⚙️</button>
+            </div>
         </div>
         
         <button onclick="window.location.href='pagamento.html'" style="background: #f59e0b; color: white; border: none; padding: 10px; width: 100%; border-radius: 8px; margin-bottom: 15px; cursor: pointer; font-weight: bold;">
@@ -102,6 +181,32 @@
     </div>
 
     <div id="notification">Por favor, digite uma tarefa!</div>
+
+    <div id="settingsModal">
+    <div class="settings-card">
+        <h2 style="margin-top: 0; color: #111827; font-size: 1.25rem;">Settings</h2>
+        
+        <div class="setting-option">
+            <label>Language</label>
+            <select id="langSelect" class="modern-select">
+                <option value="pt">Português (PT)</option>
+                <option value="en">English (EN)</option>
+            </select>
+        </div>
+
+        <div class="setting-option">
+            <label>Theme Mode</label>
+            <select id="themeSelect" class="modern-select">
+                <option value="light">Light Mode</option>
+                <option value="dark">Dark Mode</option>
+            </select>
+        </div>
+
+        <button class="btn-close" onclick="applySettings(); document.getElementById('settingsModal').style.display = 'none'">
+            Save Changes
+        </button>
+    </div>
+</div>
 
     <script>
         // Lógica de ID único
@@ -264,6 +369,32 @@ window.addEventListener('load', verificarAcesso);
         });
 
         render();
+
+        function applySettings() {
+            // 1. Lógica do Tema
+            const themeSelect = document.getElementById('themeSelect').value;
+            if (themeSelect === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+
+            // 2. Lógica de Idioma
+            const lang = document.getElementById('langSelect').value;
+            const translations = {
+                'en': { title: 'Tasks', add: 'Add', pending: 'Pending', completed: 'Completed', premium: 'Activate Premium' },
+                'pt': { title: 'Tarefas', add: 'Adicionar', pending: 'Pendentes', completed: 'Concluídas', premium: 'Ativar Acesso Premium' }
+            };
+
+            const t = translations[lang];
+            document.querySelector('h1').innerText = t.title;
+            document.getElementById('addBtn').innerText = t.add;
+            document.getElementById('btnPending').innerText = t.pending;
+            document.getElementById('btnCompleted').innerText = t.completed;
+            // Adicione mais seletores conforme necessário
+        }
+        
+
     </script>
 </body>
 </html>
