@@ -17,7 +17,7 @@
         button { width: 100%; padding: 14px; border: none; border-radius: 10px; cursor: pointer; color: white; font-weight: bold; margin-top: 10px; transition: 0.3s; }
         button:hover:not(:disabled) { opacity: 0.9; }
         button:disabled { background: #ccc; cursor: not-allowed; }
-        .btn-mp { background: #22c55e; margin-bottom: 20px; }
+        .btn-mp { background: #22c55e; margin-bottom: 5px; font-size: 0.85rem; padding: 10px; }
         .btn-send { background: #6366f1; }
         .contact { margin-top: 25px; font-size: 0.85rem; color: #666; line-height: 1.6; text-align: center; }
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
@@ -33,19 +33,25 @@
         <i class="fas fa-crown" style="color: #f59e0b; font-size: 1.5rem; margin-bottom: 10px;"></i>
         <p style="font-size: 1rem; margin-bottom: 15px;">Escolha o plano ideal para suas tarefas:</p>
         
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-            <div style="padding: 10px; background: white; border-radius: 8px; border: 1px solid #f59e0b;"><strong>Mensal:</strong> R$ 14,90</div>
-            <div style="padding: 10px; background: white; border-radius: 8px; border: 1px solid #f59e0b;"><strong>Trimestral:</strong> R$ 39,90 <em>(Economize 10%)</em></div>
-            <div style="padding: 10px; background: #f59e0b; color: white; border-radius: 8px;"><strong>Anual:</strong> R$ 119,90 <em>(Economize 30%)</em></div>
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div style="padding: 10px; background: white; border-radius: 8px; border: 1px solid #f59e0b;">
+                <strong>Mensal:</strong> R$ 14,90
+                <a href="https://mpago.la/2pjnTXi" target="_blank" style="text-decoration:none;"><button class="btn-mp">Pagar</button></a>
+            </div>
+            <div style="padding: 10px; background: white; border-radius: 8px; border: 1px solid #f59e0b;">
+                <strong>Trimestral:</strong> R$ 39,90 <em>(10% off)</em>
+                <a href="https://mpago.la/2jHdepM" target="_blank" style="text-decoration:none;"><button class="btn-mp">Pagar</button></a>
+            </div>
+            <div style="padding: 10px; background: #f59e0b; color: white; border-radius: 8px;">
+                <strong>Anual:</strong> R$ 119,90 <em>(30% off)</em>
+                <a href="https://mpago.la/23LsoSW" target="_blank" style="text-decoration:none;"><button class="btn-mp" style="background: #fff; color: #f59e0b;">Pagar</button></a>
+            </div>
         </div>
 
         <p style="font-size: 0.8rem; margin-top: 15px; opacity: 0.8;">
             * Assinatura sem fidelidade: se não desejar mais utilizar, basta não renovar no próximo período.
         </p>
     </div>
-    <a href="https://mpago.la/2Z15U7r" target="_blank" style="text-decoration:none;">
-        <button class="btn-mp">Pagar via Mercado Pago</button>
-    </a>
     
     <div class="input-group">
         <label for="devId">Seu ID de Acesso</label>
@@ -53,7 +59,7 @@
     </div>
     
     <div class="input-group">
-        <label for="txId">ID da Transação  de Pagamento</label>
+        <label for="txId">ID da Transação de Pagamento</label>
         <input type="text" id="txId" placeholder="Ex: MP-987654321">
     </div>
     
@@ -79,7 +85,6 @@
 </div>
 
 <script>
-    // Preenche o ID automaticamente ao carregar
     document.getElementById('devId').value = localStorage.getItem('userDeviceId') || "Não identificado";
 
     async function enviarDados() {
@@ -100,13 +105,10 @@
 
         try {
             await fetch(urlCompleta, { method: "POST" });
-            
-            // CHAMADA CORRIGIDA: Usa os mesmos parâmetros que a função abrirModal espera
             abrirModal(
                 "Enviado!", 
                 "Solicitação recebida. Nossa equipe de suporte fará a conferência do seu pagamento e o acesso será liberado em até 10 minutos. Fique atento: após esse prazo, feche e abra novamente o aplicativo para validar seu acesso Premium!"
             );
-            
         } catch (e) {
             abrirModal("Erro", "Houve um problema ao enviar. Tente novamente em instantes.");
         } finally {
@@ -116,7 +118,6 @@
     }
 
     function abrirModal(titulo, mensagem) {
-        // Agora os IDs conferem com o que é setado em enviarDados
         document.getElementById('modal-titulo').innerText = titulo;
         document.getElementById('modal-texto').innerText = mensagem;
         document.getElementById('modal').style.display = 'flex';
